@@ -1,14 +1,17 @@
+import streamlit as st
 from dotenv import load_dotenv
+from langchain_google_genai import ChatGoogleGenerativeAI
+
 load_dotenv()
 
-from langchain_google_genai  import ChatGoogleGenerativeAI
-llm = ChatGoogleGenerativeAI(model = "gemini-2.5-flash")
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
 
-while True:
-    query = input("User: ")
+st.title("Gemini AI Chatbot")
 
-    if query.lower() in ["quit","exit","bye"]:
-        break
+query = st.text_input("Enter your question")
 
-    res = llm.invoke(query)
-    print("AI:",res.content)
+if st.button("Ask"):
+    if query:
+        res = llm.invoke(query)
+        st.write("### AI:")
+        st.write(res.content)
