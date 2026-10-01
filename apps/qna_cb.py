@@ -4,7 +4,11 @@ load_dotenv()
 from langchain_google_genai  import ChatGoogleGenerativeAI
 llm = ChatGoogleGenerativeAI(model = "gemini-2.5-flash")
 
-que = "who is pm of india"
-result  = llm.invoke(que)
+while True:
+    query = input("User: ")
 
-print(result.content)
+    if query.lower() in ["quit","exit","bye"]:
+        break
+
+    res = llm.invoke(query)
+    print("AI:",res.content)
