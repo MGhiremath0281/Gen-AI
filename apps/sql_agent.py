@@ -1,6 +1,8 @@
 from langchain_ollama import ChatOllama
 from langchain_community.utilities import SQLDatabase
-from langchain_community.agent_toolkits import SQLDatabaseToolkit
+from langchain_community.agent_toolkits import SQLDatabaseToolkit, create_sql_agent
+
+from langgraph.checkpoint.memory import MemorySaver
 
 db = SQLDatabase.from_uri("sqlite:///my_task.db")
 
@@ -21,9 +23,15 @@ db.run(
 
 print("Tasks table created successfully")
 
-llm = ChatOllama(model="gemma4:e2b")
+llm = ChatOllama(
+    model="gemma4:e2b",
+    temperature=0
+)
 
-# llm , tool , memory , systemprompt
+
+# -----------------------------
+# System Prompt
+# -----------------------------
 
 systemprompt = """
 You are a task management assistant.
@@ -48,3 +56,61 @@ Rules:
 6. Keep responses concise and easy to understand.
 7. If the user's request is unclear, ask for clarification.
 """
+
+
+# -----------------------------
+# Memory
+# -----------------------------
+
+memory = MemorySaver()
+
+
+# -----------------------------
+# SQL Toolkit
+# -----------------------------
+
+toolkit = SQLDatabaseToolkit(
+    db=db,
+    llm=llm
+)
+
+
+# -----------------------------
+# Create Agent
+# -----------------------------
+
+agent = create_sql_agent(
+    llm=llm,
+    toolkit=toolkit,
+    system_prompt=systemprompt,
+    agent_type="tool-calling",
+    verbose=True,
+)
+
+
+# -----------------------------
+# Chat
+# -----------------------------
+
+config = {
+    "configurable": {
+        "thread_id": "user-1"
+    }
+}
+
+
+while True:
+
+    user_input = input("\nYou: ")
+
+    if user_input.lower() in ["exit", "quit"]:
+        break
+
+    response = agent.invoke(
+        {
+            "input": user_input
+        },
+        config=config
+    )
+
+    print("\nAgent:", response["output"])
